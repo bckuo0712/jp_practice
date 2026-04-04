@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>50音 AI 練字王 - 全功能版</title>
+    <title>50音 AI 練字王 - Debug 穩定版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         html, body { 
@@ -21,7 +21,7 @@
         
         .hint-text {
             position: absolute; inset: 0; display: flex; align-items: center; 
-            justify-content: center; font-size: 7rem; font-family: "MS Mincho", "Sawarabi Mincho", serif; 
+            justify-content: center; font-size: 7rem; font-family: serif; 
             font-weight: 900; z-index: 0; pointer-events: none; opacity: 0.12;
         }
         canvas { position: absolute; inset: 0; z-index: 10; touch-action: none; background: transparent; }
@@ -30,25 +30,21 @@
         .loading-dot { animation: blink 1s infinite; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
         
-        select { background: #1e293b; border: 1px solid #334155; padding: 4px 8px; border-radius: 8px; font-size: 11px; color: #94a3b8; }
-        
-        /* 進度條樣式 */
         .progress-bar { width: 100%; height: 4px; background: #334155; border-radius: 2px; margin-top: 8px; overflow: hidden; }
         #progress-fill { width: 0%; height: 100%; background: #3b82f6; transition: width 0.3s; }
     </style>
 </head>
 <body class="flex flex-col items-center p-2">
 
-    <!-- 模式選擇列 -->
     <div class="flex flex-col items-center space-y-2 mb-2 mt-1 w-full max-w-[320px]">
         <div class="flex bg-slate-800 rounded-xl p-1 w-full">
-            <button id="p-mode" onclick="setMode('practice')" class="flex-1 py-1.5 rounded-lg font-bold text-[10px] text-slate-400">練習</button>
-            <button id="e-mode" onclick="setMode('exam')" class="flex-1 py-1.5 rounded-lg font-bold text-[10px] text-slate-400">隨機</button>
-            <button id="m-mode" onclick="setMode('marathon')" class="flex-1 py-1.5 rounded-lg font-bold text-[10px] text-slate-400">馬拉松</button>
+            <button id="p-mode" onclick="setMode('practice')" class="flex-1 py-2 rounded-lg font-bold text-xs">練習</button>
+            <button id="e-mode" onclick="setMode('exam')" class="flex-1 py-2 rounded-lg font-bold text-xs">隨機</button>
+            <button id="m-mode" onclick="setMode('marathon')" class="flex-1 py-2 rounded-lg font-bold text-xs">馬拉松</button>
         </div>
         
-        <div class="flex items-center space-x-2 w-full" id="row-filter-container">
-            <select id="row-select" onchange="filterData()" class="flex-1">
+        <div class="flex items-center space-x-2 w-full">
+            <select id="row-select" onchange="filterData()" class="flex-1 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs">
                 <option value="all">全部五十音</option>
                 <option value="0,5">あ行</option>
                 <option value="5,10">か行</option>
@@ -61,13 +57,12 @@
                 <option value="38,43">ら行</option>
                 <option value="43,46">わ/ん</option>
             </select>
-            <div class="text-[10px] text-slate-500 font-mono" id="idx-counter">0/46</div>
+            <div class="text-xs text-slate-500 font-mono" id="idx-counter">1/46</div>
         </div>
-
-        <div class="progress-bar" id="progress-container"><div id="progress-fill"></div></div>
+        <div class="progress-bar"><div id="progress-fill"></div></div>
     </div>
 
-    <div id="target-romaji" class="text-6xl font-black text-blue-500 mb-1 uppercase italic tracking-tighter">A</div>
+    <div id="target-romaji" class="text-6xl font-black text-blue-500 mb-1 uppercase italic italic tracking-tighter">A</div>
 
     <div class="canvas-box" id="boxH">
         <div class="hint-text text-slate-400" id="hint-hira">あ</div>
@@ -79,7 +74,7 @@
         <canvas id="canK" width="320" height="180"></canvas>
     </div>
 
-    <div id="status-msg" class="h-6 text-xs font-bold mb-4 text-slate-500 tracking-widest uppercase text-center">READY</div>
+    <div id="status-msg" class="h-6 text-xs font-bold mb-4 text-slate-500 tracking-widest text-center uppercase">READY</div>
 
     <div class="flex space-x-3 w-full max-w-[320px]">
         <button onclick="resetAll()" class="flex-1 bg-slate-800 py-4 rounded-2xl font-bold text-slate-300">清除</button>
@@ -91,16 +86,16 @@
             { h: 'あ', k: 'ア', r: 'a' }, { h: 'い', k: 'イ', r: 'i' }, { h: 'う', k: 'ウ', r: 'u' }, { h: 'え', k: 'エ', r: 'e' }, { h: 'お', k: 'オ', r: 'o' },
             { h: 'か', k: 'カ', r: 'ka' }, { h: 'き', k: 'キ', r: 'ki' }, { h: 'く', k: 'ク', r: 'ku' }, { h: 'け', k: 'ケ', r: 'ke' }, { h: 'こ', k: 'コ', r: 'ko' },
             { h: 'さ', k: 'サ', r: 'sa' }, { h: 'し', k: 'シ', r: 'shi' }, { h: 'す', k: 'ス', r: 'su' }, { h: 'せ', k: 'セ', r: 'se' }, { h: 'そ', k: 'ソ', r: 'so' },
-            { h: 'た', k: 'タ', r: 'ta' }, { h: 'ち', k: 'チ', r: 'chi' }, { h: 'つ', k: 'ツ', r: 'tsu' }, { h: 'て', k: 'テ', r: 'te' }, { h: '圖', k: 'ト', r: 'to' },
+            { h: 'た', k: 'タ', r: 'ta' }, { h: 'ち', k: 'チ', r: 'chi' }, { h: 'つ', k: 'ツ', r: 'tsu' }, { h: 'て', k: 'テ', r: 'te' }, { h: 'と', k: 'ト', r: 'to' },
             { h: 'な', k: 'ナ', r: 'na' }, { h: 'に', k: 'ニ', r: 'ni' }, { h: 'ぬ', k: 'ヌ', r: 'nu' }, { h: 'ね', k: 'ネ', r: 'ne' }, { h: 'の', k: 'ノ', r: 'no' },
             { h: 'は', k: 'ハ', r: 'ha' }, { h: 'ひ', k: 'ヒ', r: 'hi' }, { h: 'ふ', k: 'フ', r: 'fu' }, { h: 'へ', k: 'ヘ', r: 'he' }, { h: 'ほ', k: 'ホ', r: 'ho' },
             { h: 'ま', k: '馬', r: 'ma' }, { h: 'み', k: 'ミ', r: 'mi' }, { h: 'む', k: 'ム', r: 'mu' }, { h: 'め', k: 'メ', r: 'me' }, { h: 'も', k: 'モ', r: 'mo' },
             { h: 'や', k: 'ヤ', r: 'ya' }, { h: 'ゆ', k: 'ユ', r: 'yu' }, { h: 'よ', k: 'ヨ', r: 'yo' },
-            { h: 'ら', k: 'ラ', r: 'ra' }, { h: 'り', k: 'リ', r: 'ri' }, { h: 'る', k: 'ル', r: 'ru' }, { h: 'れ', k: 'レ', r: 're' }, { h: 'ろ', k: 'ロ', r: 'ro' },
+            { h: 'ら', k: '拉', r: 'ra' }, { h: 'り', k: 'リ', r: 'ri' }, { h: 'る', k: 'ル', r: 'ru' }, { h: 'れ', k: 'レ', r: 're' }, { h: 'ろ', k: '羅', r: 'ro' },
             { h: 'わ', k: 'ワ', r: 'wa' }, { h: 'を', k: 'ヲ', r: 'wo' }, { h: 'ん', k: 'ン', r: 'n' }
         ];
-        // 修正數據中偶發的簡繁轉換錯誤
-        fullData[18].h = 'て'; fullData[19].h = 'と'; fullData[30].h = 'ま';
+        // 再次手動確保資料乾淨
+        fullData[30].h = 'ま'; fullData[38].h = 'ら'; fullData[42].h = 'ろ';
 
         let kanaData = [...fullData];
         let curIdx = 0, mode = 'practice';
@@ -115,16 +110,18 @@
         }
         initCtx(ctxH); initCtx(ctxK);
 
-        function setupCanvas(can, strokes, type) {
+        function setupCanvas(can, strokesArr, type) {
             let drawing = false;
             let timer = null;
             const ctx = can.getContext('2d');
+            
             const getXY = (e) => {
                 const rect = can.getBoundingClientRect();
-                const cx = (e.touches ? e.touches[0].clientX : e.clientX);
-                const cy = (e.touches ? e.touches[0].clientY : e.clientY);
+                const cx = e.touches ? e.touches[0].clientX : e.clientX;
+                const cy = e.touches ? e.touches[0].clientY : e.clientY;
                 return { x: cx - rect.left, y: cy - rect.top };
             };
+
             const start = (e) => {
                 if ((type==='H' && hiraDone) || (type==='K' && kataDone)) return;
                 e.preventDefault();
@@ -133,16 +130,18 @@
                 document.getElementById(type === 'H' ? 'boxH' : 'boxK').classList.remove('is-error');
                 const p = getXY(e);
                 ctx.beginPath(); ctx.moveTo(p.x, p.y);
-                strokes.push([[Math.round(p.x)], [Math.round(p.y)], []]);
+                strokesArr.push([[Math.round(p.x)], [Math.round(p.y)], []]);
             };
+
             const move = (e) => {
                 if (!drawing) return;
                 e.preventDefault();
                 const p = getXY(e);
                 ctx.lineTo(p.x, p.y); ctx.stroke();
-                const last = strokes[strokes.length - 1];
+                const last = strokesArr[strokesArr.length - 1];
                 last[0].push(Math.round(p.x)); last[1].push(Math.round(p.y));
             };
+
             const stop = () => { if (drawing) { drawing = false; timer = setTimeout(() => checkSingle(type), 700); } };
 
             can.addEventListener('touchstart', start, { passive: false });
@@ -179,7 +178,7 @@
                     })
                 });
                 const data = await res.json();
-                if (data[0] === "SUCCESS") {
+                if (data && data[0] === "SUCCESS") {
                     const candidates = data[1][0][1];
                     const isOk = candidates.slice(0, 15).includes(target);
 
@@ -187,17 +186,17 @@
                         box.classList.add('is-correct');
                         if (type === 'H') hiraDone = true; else kataDone = true;
                         if (hiraDone && kataDone) {
-                            msg("太棒了！", "text-green-400");
+                            msg("Perfect!", "text-green-400");
                             setTimeout(nextQ, 600);
                         } else {
-                            msg("正確！寫下一個", "text-blue-400");
+                            msg("正確！繼續寫下一個", "text-blue-400");
                         }
                     } else {
                         box.classList.add('is-error');
-                        msg("再試一次", "text-red-400");
+                        msg("不對喔，再試試", "text-red-400");
                     }
                 }
-            } catch (e) { msg("連線異常", "text-orange-400"); }
+            } catch (e) { msg("網路不穩", "text-orange-400"); }
         }
 
         function filterData() {
@@ -211,20 +210,14 @@
             ctxH.clearRect(0,0,320,180); ctxK.clearRect(0,0,320,180);
             strokesH.length = 0; strokesK.length = 0;
             hiraDone = false; kataDone = false;
-            document.getElementById('boxH').className = 'canvas-box';
-            document.getElementById('boxK').className = 'canvas-box';
+            document.getElementById('boxH').classList.remove('is-correct', 'is-error');
+            document.getElementById('boxK').classList.remove('is-correct', 'is-error');
             msg("READY", "text-slate-500");
         }
 
         function render() {
             const q = kanaData[curIdx];
-            if (!q) {
-                if (mode === 'marathon') {
-                    msg("馬拉松完成！", "text-green-400");
-                    setTimeout(() => { curIdx = 0; render(); }, 2000);
-                }
-                return;
-            }
+            if (!q) return;
             document.getElementById('target-romaji').innerText = q.r;
             document.getElementById('hint-hira').innerText = q.h;
             document.getElementById('hint-kata').innerText = q.k;
@@ -233,9 +226,7 @@
             document.getElementById('hint-hira').style.display = isP ? 'flex' : 'none';
             document.getElementById('hint-kata').style.display = isP ? 'flex' : 'none';
             
-            // 進度更新
-            const progress = ((curIdx) / kanaData.length) * 100;
-            document.getElementById('progress-fill').style.width = `${progress}%`;
+            document.getElementById('progress-fill').style.width = `${((curIdx) / kanaData.length) * 100}%`;
             document.getElementById('idx-counter').innerText = `${curIdx + 1}/${kanaData.length}`;
             
             resetAll();
@@ -245,36 +236,24 @@
             if (mode === 'exam') {
                 curIdx = Math.floor(Math.random() * kanaData.length);
             } else {
-                curIdx++;
-                if (curIdx >= kanaData.length) {
-                    if (mode === 'marathon') {
-                        alert('恭喜完成馬拉松練習！');
-                        curIdx = 0;
-                    } else {
-                        curIdx = 0;
-                    }
-                }
+                curIdx = (curIdx + 1) % kanaData.length;
+                if (curIdx === 0 && mode === 'marathon') alert("馬拉松練習完成！");
             }
             render(); 
         }
 
         function setMode(m) { 
             mode = m; 
-            document.getElementById('p-mode').className = `flex-1 py-1.5 rounded-lg font-bold text-[10px] ${m==='practice'?'active-mode':'text-slate-400'}`; 
-            document.getElementById('e-mode').className = `flex-1 py-1.5 rounded-lg font-bold text-[10px] ${m==='exam'?'active-mode':'text-slate-400'}`; 
-            document.getElementById('m-mode').className = `flex-1 py-1.5 rounded-lg font-bold text-[10px] ${m==='marathon'?'active-mode':'text-slate-400'}`; 
+            document.getElementById('p-mode').className = `flex-1 py-2 rounded-lg font-bold text-xs ${m==='practice'?'active-mode':'text-slate-400'}`; 
+            document.getElementById('e-mode').className = `flex-1 py-2 rounded-lg font-bold text-xs ${m==='exam'?'active-mode':'text-slate-400'}`; 
+            document.getElementById('m-mode').className = `flex-1 py-2 rounded-lg font-bold text-xs ${m==='marathon'?'active-mode':'text-slate-400'}`; 
             
-            // 馬拉松模式強制切換到「全部五十音」
             if (m === 'marathon') {
                 document.getElementById('row-select').value = 'all';
                 filterData();
+            } else {
+                render();
             }
-            render(); 
-        }
-
-        function msg(t, c) { 
-            const m = document.getElementById('status-msg'); 
-            m.innerText = t; m.className = `h-6 text-xs font-bold mb-4 ${c} tracking-widest uppercase text-center`; 
         }
 
         setMode('practice');
