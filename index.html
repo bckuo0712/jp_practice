@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>50音 AI 練字王 - 完整 46 音版</title>
+    <title>50音 AI 練字王 - 全功能版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         html, body { 
@@ -11,7 +11,7 @@
             touch-action: none; background-color: #020617; color: #f8fafc; font-family: sans-serif; 
         }
         .canvas-box { 
-            position: relative; width: 320px; height: 190px; 
+            position: relative; width: 320px; height: 180px; 
             background-color: #1e293b; border: 3px solid #334155; 
             border-radius: 20px; overflow: hidden; margin-bottom: 8px;
             transition: all 0.2s;
@@ -25,57 +25,259 @@
             font-weight: 900; z-index: 0; pointer-events: none; opacity: 0.12;
         }
         canvas { position: absolute; inset: 0; z-index: 10; touch-action: none; background: transparent; }
-        .active-mode { background-color: #3b82f6; color: white; }
+        .active-mode { background-color: #3b82f6 !important; color: white !important; }
         
         .loading-dot { animation: blink 1s infinite; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
         
-        select { background: #1e293b; border: 1px solid #334155; padding: 6px 12px; border-radius: 10px; font-size: 12px; color: #94a3b8; }
+        select { background: #1e293b; border: 1px solid #334155; padding: 4px 8px; border-radius: 8px; font-size: 11px; color: #94a3b8; }
+        
+        /* 進度條樣式 */
+        .progress-bar { width: 100%; height: 4px; background: #334155; border-radius: 2px; margin-top: 8px; overflow: hidden; }
+        #progress-fill { width: 0%; height: 100%; background: #3b82f6; transition: width 0.3s; }
     </style>
 </head>
 <body class="flex flex-col items-center p-2">
 
-    <!-- 控制列 -->
-    <div class="flex items-center space-x-2 mb-2 mt-2 w-full max-w-[320px]">
-        <div class="flex bg-slate-800 rounded-xl p-1 flex-1">
-            <button id="p-mode" onclick="setMode('practice')" class="flex-1 py-1 rounded-lg active-mode font-bold text-xs">練習</button>
-            <button id="e-mode" onclick="setMode('exam')" class="flex-1 py-1 rounded-lg font-bold text-slate-400 text-xs">挑戰</button>
+    <!-- 模式選擇列 -->
+    <div class="flex flex-col items-center space-y-2 mb-2 mt-1 w-full max-w-[320px]">
+        <div class="flex bg-slate-800 rounded-xl p-1 w-full">
+            <button id="p-mode" onclick="setMode('practice')" class="flex-1 py-1.5 rounded-lg font-bold text-[10px] text-slate-400">練習</button>
+            <button id="e-mode" onclick="setMode('exam')" class="flex-1 py-1.5 rounded-lg font-bold text-[10px] text-slate-400">隨機</button>
+            <button id="m-mode" onclick="setMode('marathon')" class="flex-1 py-1.5 rounded-lg font-bold text-[10px] text-slate-400">馬拉松</button>
         </div>
-        <select id="row-select" onchange="filterData()" class="flex-1">
-            <option value="all">全部五十音</option>
-            <option value="0,5">あ行 (a...)</option>
-            <option value="5,10">か行 (ka...)</option>
-            <option value="10,15">さ行 (sa...)</option>
-            <option value="15,20">た行 (ta...)</option>
-            <option value="20,25">な行 (na...)</option>
-            <option value="25,30">は行 (ha...)</option>
-            <option value="30,35">ま行 (ma...)</option>
-            <option value="35,38">や行 (ya...)</option>
-            <option value="38,43">ら行 (ra...)</option>
-            <option value="43,46">わ行/ん</option>
-        </select>
+        
+        <div class="flex items-center space-x-2 w-full" id="row-filter-container">
+            <select id="row-select" onchange="filterData()" class="flex-1">
+                <option value="all">全部五十音</option>
+                <option value="0,5">あ行</option>
+                <option value="5,10">か行</option>
+                <option value="10,15">さ行</option>
+                <option value="15,20">た行</option>
+                <option value="20,25">な行</option>
+                <option value="25,30">は行</option>
+                <option value="30,35">ま行</option>
+                <option value="35,38">や行</option>
+                <option value="38,43">ら行</option>
+                <option value="43,46">わ/ん</option>
+            </select>
+            <div class="text-[10px] text-slate-500 font-mono" id="idx-counter">0/46</div>
+        </div>
+
+        <div class="progress-bar" id="progress-container"><div id="progress-fill"></div></div>
     </div>
 
     <div id="target-romaji" class="text-6xl font-black text-blue-500 mb-1 uppercase italic tracking-tighter">A</div>
 
-    <!-- 平假名區域 -->
     <div class="canvas-box" id="boxH">
         <div class="hint-text text-slate-400" id="hint-hira">あ</div>
-        <canvas id="canH" width="320" height="190"></canvas>
+        <canvas id="canH" width="320" height="180"></canvas>
     </div>
 
-    <!-- 片假名區域 -->
     <div class="canvas-box" id="boxK">
         <div class="hint-text text-slate-500" id="hint-kata">ア</div>
-        <canvas id="canK" width="320" height="190"></canvas>
+        <canvas id="canK" width="320" height="180"></canvas>
     </div>
 
-    <div id="status-msg" class="h-6 text-sm font-bold mb-4 text-slate-500 uppercase tracking-widest text-center">READY</div>
+    <div id="status-msg" class="h-6 text-xs font-bold mb-4 text-slate-500 tracking-widest uppercase text-center">READY</div>
 
-    <!-- 操作按鈕 -->
     <div class="flex space-x-3 w-full max-w-[320px]">
-        <button onclick="resetAll()" class="flex-1 bg-slate-800 py-4 rounded-2xl font-bold text-slate-300 active:scale-95 transition-transform">清除</button>
-        <button onclick="nextQ()" class="flex-1 bg-blue-900/30 text-blue-400 py-4 rounded-2xl font-bold active:scale-95 transition-transform">跳過</button>
+        <button onclick="resetAll()" class="flex-1 bg-slate-800 py-4 rounded-2xl font-bold text-slate-300">清除</button>
+        <button onclick="nextQ()" class="flex-1 bg-blue-900/30 text-blue-400 py-4 rounded-2xl font-bold">跳過</button>
     </div>
 
     <script>
+        const fullData = [
+            { h: 'あ', k: 'ア', r: 'a' }, { h: 'い', k: 'イ', r: 'i' }, { h: 'う', k: 'ウ', r: 'u' }, { h: 'え', k: 'エ', r: 'e' }, { h: 'お', k: 'オ', r: 'o' },
+            { h: 'か', k: 'カ', r: 'ka' }, { h: 'き', k: 'キ', r: 'ki' }, { h: 'く', k: 'ク', r: 'ku' }, { h: 'け', k: 'ケ', r: 'ke' }, { h: 'こ', k: 'コ', r: 'ko' },
+            { h: 'さ', k: 'サ', r: 'sa' }, { h: 'し', k: 'シ', r: 'shi' }, { h: 'す', k: 'ス', r: 'su' }, { h: 'せ', k: 'セ', r: 'se' }, { h: 'そ', k: 'ソ', r: 'so' },
+            { h: 'た', k: 'タ', r: 'ta' }, { h: 'ち', k: 'チ', r: 'chi' }, { h: 'つ', k: 'ツ', r: 'tsu' }, { h: 'て', k: 'テ', r: 'te' }, { h: '圖', k: 'ト', r: 'to' },
+            { h: 'な', k: 'ナ', r: 'na' }, { h: 'に', k: 'ニ', r: 'ni' }, { h: 'ぬ', k: 'ヌ', r: 'nu' }, { h: 'ね', k: 'ネ', r: 'ne' }, { h: 'の', k: 'ノ', r: 'no' },
+            { h: 'は', k: 'ハ', r: 'ha' }, { h: 'ひ', k: 'ヒ', r: 'hi' }, { h: 'ふ', k: 'フ', r: 'fu' }, { h: 'へ', k: 'ヘ', r: 'he' }, { h: 'ほ', k: 'ホ', r: 'ho' },
+            { h: 'ま', k: '馬', r: 'ma' }, { h: 'み', k: 'ミ', r: 'mi' }, { h: 'む', k: 'ム', r: 'mu' }, { h: 'め', k: 'メ', r: 'me' }, { h: 'も', k: 'モ', r: 'mo' },
+            { h: 'や', k: 'ヤ', r: 'ya' }, { h: 'ゆ', k: 'ユ', r: 'yu' }, { h: 'よ', k: 'ヨ', r: 'yo' },
+            { h: 'ら', k: 'ラ', r: 'ra' }, { h: 'り', k: 'リ', r: 'ri' }, { h: 'る', k: 'ル', r: 'ru' }, { h: 'れ', k: 'レ', r: 're' }, { h: 'ろ', k: 'ロ', r: 'ro' },
+            { h: 'わ', k: 'ワ', r: 'wa' }, { h: 'を', k: 'ヲ', r: 'wo' }, { h: 'ん', k: 'ン', r: 'n' }
+        ];
+        // 修正數據中偶發的簡繁轉換錯誤
+        fullData[18].h = 'て'; fullData[19].h = 'と'; fullData[30].h = 'ま';
+
+        let kanaData = [...fullData];
+        let curIdx = 0, mode = 'practice';
+        let strokesH = [], strokesK = [];
+        let hiraDone = false, kataDone = false;
+        
+        const canH = document.getElementById('canH'), ctxH = canH.getContext('2d');
+        const canK = document.getElementById('canK'), ctxK = canK.getContext('2d');
+
+        function initCtx(ctx) {
+            ctx.lineWidth = 6; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#ffffff';
+        }
+        initCtx(ctxH); initCtx(ctxK);
+
+        function setupCanvas(can, strokes, type) {
+            let drawing = false;
+            let timer = null;
+            const ctx = can.getContext('2d');
+            const getXY = (e) => {
+                const rect = can.getBoundingClientRect();
+                const cx = (e.touches ? e.touches[0].clientX : e.clientX);
+                const cy = (e.touches ? e.touches[0].clientY : e.clientY);
+                return { x: cx - rect.left, y: cy - rect.top };
+            };
+            const start = (e) => {
+                if ((type==='H' && hiraDone) || (type==='K' && kataDone)) return;
+                e.preventDefault();
+                clearTimeout(timer);
+                drawing = true;
+                document.getElementById(type === 'H' ? 'boxH' : 'boxK').classList.remove('is-error');
+                const p = getXY(e);
+                ctx.beginPath(); ctx.moveTo(p.x, p.y);
+                strokes.push([[Math.round(p.x)], [Math.round(p.y)], []]);
+            };
+            const move = (e) => {
+                if (!drawing) return;
+                e.preventDefault();
+                const p = getXY(e);
+                ctx.lineTo(p.x, p.y); ctx.stroke();
+                const last = strokes[strokes.length - 1];
+                last[0].push(Math.round(p.x)); last[1].push(Math.round(p.y));
+            };
+            const stop = () => { if (drawing) { drawing = false; timer = setTimeout(() => checkSingle(type), 700); } };
+
+            can.addEventListener('touchstart', start, { passive: false });
+            can.addEventListener('touchmove', move, { passive: false });
+            can.addEventListener('touchend', stop);
+            can.addEventListener('mousedown', start);
+            can.addEventListener('mousemove', move);
+            window.addEventListener('mouseup', stop);
+        }
+
+        setupCanvas(canH, strokesH, 'H');
+        setupCanvas(canK, strokesK, 'K');
+
+        async function checkSingle(type) {
+            const strokes = (type === 'H') ? strokesH : strokesK;
+            const target = (type === 'H') ? kanaData[curIdx].h : kanaData[curIdx].k;
+            const box = document.getElementById(type === 'H' ? 'boxH' : 'boxK');
+            
+            if (strokes.length === 0 || (type === 'H' ? hiraDone : kataDone)) return;
+
+            msg("辨識中...", "text-blue-400 loading-dot");
+
+            try {
+                const res = await fetch('https://inputtools.google.com/request?ime=handwriting&app=mobilesearch&cs=1&oe=UTF-8', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        options: "enable_pre_space",
+                        requests: [{
+                            writing_guide: { writing_area_width: 320, writing_area_height: 180 },
+                            ink: strokes,
+                            language: "ja"
+                        }]
+                    })
+                });
+                const data = await res.json();
+                if (data[0] === "SUCCESS") {
+                    const candidates = data[1][0][1];
+                    const isOk = candidates.slice(0, 15).includes(target);
+
+                    if (isOk) {
+                        box.classList.add('is-correct');
+                        if (type === 'H') hiraDone = true; else kataDone = true;
+                        if (hiraDone && kataDone) {
+                            msg("太棒了！", "text-green-400");
+                            setTimeout(nextQ, 600);
+                        } else {
+                            msg("正確！寫下一個", "text-blue-400");
+                        }
+                    } else {
+                        box.classList.add('is-error');
+                        msg("再試一次", "text-red-400");
+                    }
+                }
+            } catch (e) { msg("連線異常", "text-orange-400"); }
+        }
+
+        function filterData() {
+            const val = document.getElementById('row-select').value;
+            kanaData = (val === 'all') ? [...fullData] : fullData.slice(...val.split(',').map(Number));
+            curIdx = 0;
+            render();
+        }
+
+        function resetAll() {
+            ctxH.clearRect(0,0,320,180); ctxK.clearRect(0,0,320,180);
+            strokesH.length = 0; strokesK.length = 0;
+            hiraDone = false; kataDone = false;
+            document.getElementById('boxH').className = 'canvas-box';
+            document.getElementById('boxK').className = 'canvas-box';
+            msg("READY", "text-slate-500");
+        }
+
+        function render() {
+            const q = kanaData[curIdx];
+            if (!q) {
+                if (mode === 'marathon') {
+                    msg("馬拉松完成！", "text-green-400");
+                    setTimeout(() => { curIdx = 0; render(); }, 2000);
+                }
+                return;
+            }
+            document.getElementById('target-romaji').innerText = q.r;
+            document.getElementById('hint-hira').innerText = q.h;
+            document.getElementById('hint-kata').innerText = q.k;
+            
+            const isP = (mode === 'practice');
+            document.getElementById('hint-hira').style.display = isP ? 'flex' : 'none';
+            document.getElementById('hint-kata').style.display = isP ? 'flex' : 'none';
+            
+            // 進度更新
+            const progress = ((curIdx) / kanaData.length) * 100;
+            document.getElementById('progress-fill').style.width = `${progress}%`;
+            document.getElementById('idx-counter').innerText = `${curIdx + 1}/${kanaData.length}`;
+            
+            resetAll();
+        }
+
+        function nextQ() { 
+            if (mode === 'exam') {
+                curIdx = Math.floor(Math.random() * kanaData.length);
+            } else {
+                curIdx++;
+                if (curIdx >= kanaData.length) {
+                    if (mode === 'marathon') {
+                        alert('恭喜完成馬拉松練習！');
+                        curIdx = 0;
+                    } else {
+                        curIdx = 0;
+                    }
+                }
+            }
+            render(); 
+        }
+
+        function setMode(m) { 
+            mode = m; 
+            document.getElementById('p-mode').className = `flex-1 py-1.5 rounded-lg font-bold text-[10px] ${m==='practice'?'active-mode':'text-slate-400'}`; 
+            document.getElementById('e-mode').className = `flex-1 py-1.5 rounded-lg font-bold text-[10px] ${m==='exam'?'active-mode':'text-slate-400'}`; 
+            document.getElementById('m-mode').className = `flex-1 py-1.5 rounded-lg font-bold text-[10px] ${m==='marathon'?'active-mode':'text-slate-400'}`; 
+            
+            // 馬拉松模式強制切換到「全部五十音」
+            if (m === 'marathon') {
+                document.getElementById('row-select').value = 'all';
+                filterData();
+            }
+            render(); 
+        }
+
+        function msg(t, c) { 
+            const m = document.getElementById('status-msg'); 
+            m.innerText = t; m.className = `h-6 text-xs font-bold mb-4 ${c} tracking-widest uppercase text-center`; 
+        }
+
+        setMode('practice');
+    </script>
+</body>
+</html>
