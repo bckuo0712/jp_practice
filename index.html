@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>50音 AI 練字王 - 靈敏優化版</title>
+    <title>50音 AI 練字王 - 完整版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         html, body { 
@@ -11,9 +11,9 @@
             touch-action: none; background-color: #020617; color: #f8fafc; font-family: sans-serif; 
         }
         .canvas-box { 
-            position: relative; width: 320px; height: 210px; 
+            position: relative; width: 320px; height: 200px; 
             background-color: #1e293b; border: 3px solid #334155; 
-            border-radius: 20px; overflow: hidden; margin-bottom: 12px;
+            border-radius: 20px; overflow: hidden; margin-bottom: 8px;
             transition: all 0.2s;
         }
         .is-correct { border-color: #22c55e !important; background-color: #052e16 !important; }
@@ -21,7 +21,7 @@
         
         .hint-text {
             position: absolute; inset: 0; display: flex; align-items: center; 
-            justify-content: center; font-size: 8rem; font-family: serif; 
+            justify-content: center; font-size: 7rem; font-family: "MS Mincho", "Sawarabi Mincho", serif; 
             font-weight: 900; z-index: 0; pointer-events: none; opacity: 0.12;
         }
         canvas { position: absolute; inset: 0; z-index: 10; touch-action: none; background: transparent; }
@@ -29,42 +29,67 @@
         
         .loading-dot { animation: blink 1s infinite; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        
+        select { background: #1e293b; border: 1px solid #334155; padding: 4px 8px; border-radius: 8px; font-size: 12px; }
     </style>
 </head>
-<body class="flex flex-col items-center p-4">
+<body class="flex flex-col items-center p-2">
 
-    <div class="flex bg-slate-800 rounded-xl p-1 mb-2 w-64 mt-2">
-        <button id="p-mode" onclick="setMode('practice')" class="flex-1 py-1 rounded-lg active-mode font-bold text-xs">練習</button>
-        <button id="e-mode" onclick="setMode('exam')" class="flex-1 py-1 rounded-lg font-bold text-slate-400 text-xs">挑戰</button>
+    <!-- 模式與行數選擇 -->
+    <div class="flex items-center space-x-2 mb-2 mt-2">
+        <div class="flex bg-slate-800 rounded-xl p-1 w-40">
+            <button id="p-mode" onclick="setMode('practice')" class="flex-1 py-1 rounded-lg active-mode font-bold text-xs">練習</button>
+            <button id="e-mode" onclick="setMode('exam')" class="flex-1 py-1 rounded-lg font-bold text-slate-400 text-xs">挑戰</button>
+        </div>
+        <select id="row-select" onchange="filterData()">
+            <option value="all">全部五十音</option>
+            <option value="0,5">あ行 (a i u e o)</option>
+            <option value="5,10">か行 (ka ki ku ke ko)</option>
+            <option value="10,15">さ行 (sa shi su se so)</option>
+            <option value="15,20">た行 (ta chi tsu te to)</option>
+            <option value="20,25">な行 (na ni nu ne no)</option>
+            <option value="25,30">は行 (ha hi fu he ho)</option>
+            <option value="30,35">ま行 (ma mi mu me mo)</option>
+            <option value="35,38">や行 (ya yu yo)</option>
+            <option value="38,43">ら行 (ra ri ru re ro)</option>
+            <option value="43,46">わ/ん (wa wo n)</option>
+        </select>
     </div>
 
-    <div id="target-romaji" class="text-6xl font-black text-blue-500 mb-2 uppercase italic tracking-tighter">A</div>
+    <div id="target-romaji" class="text-5xl font-black text-blue-500 mb-1 uppercase italic tracking-tighter">A</div>
 
     <div class="canvas-box" id="boxH">
         <div class="hint-text text-slate-400" id="hint-hira">あ</div>
-        <canvas id="canH" width="320" height="210"></canvas>
+        <canvas id="canH" width="320" height="200"></canvas>
     </div>
 
     <div class="canvas-box" id="boxK">
         <div class="hint-text text-slate-500" id="hint-kata">ア</div>
-        <canvas id="canK" width="320" height="210"></canvas>
+        <canvas id="canK" width="320" height="200"></canvas>
     </div>
 
     <div id="status-msg" class="h-6 text-sm font-bold mb-4 text-slate-500 uppercase tracking-widest">READY</div>
 
     <div class="flex space-x-3 w-full max-w-[320px]">
-        <button onclick="resetAll()" class="flex-1 bg-slate-800 py-4 rounded-2xl font-bold text-slate-300">清除</button>
-        <button onclick="nextQ()" class="flex-1 bg-blue-900/30 text-blue-400 py-4 rounded-2xl font-bold">跳過</button>
+        <button onclick="resetAll()" class="flex-1 bg-slate-800 py-3 rounded-2xl font-bold text-slate-300">清除</button>
+        <button onclick="nextQ()" class="flex-1 bg-blue-900/30 text-blue-400 py-3 rounded-2xl font-bold">跳過 / 下一個</button>
     </div>
 
     <script>
-        const kanaData = [
-            { h: 'あ', k: 'ア', r: 'a' }, { h: 'い', k: 'イ', r: 'i' }, { h: 'う', k: 'ウ', r: 'u' },
-            { h: 'え', k: 'エ', r: 'e' }, { h: 'お', k: 'オ', r: 'o' }, { h: 'か', k: 'カ', r: 'ka' },
-            { h: 'き', k: 'キ', r: 'ki' }, { h: 'く', k: 'ク', r: 'ku' }, { h: 'け', k: 'ケ', r: 'ke' },
-            { h: 'こ', k: 'コ', r: 'ko' }
+        const fullData = [
+            { h: 'あ', k: 'ア', r: 'a' }, { h: 'い', k: 'イ', r: 'i' }, { h: 'う', k: 'ウ', r: 'u' }, { h: 'え', k: 'エ', r: 'e' }, { h: 'お', k: 'オ', r: 'o' },
+            { h: 'か', k: 'カ', r: 'ka' }, { h: 'き', k: 'キ', r: 'ki' }, { h: 'く', k: 'ク', r: 'ku' }, { h: 'け', k: 'ケ', r: 'ke' }, { h: 'こ', k: 'コ', r: 'ko' },
+            { h: 'さ', k: 'サ', r: 'sa' }, { h: 'し', k: 'シ', r: 'shi' }, { h: 'す', k: 'ス', r: 'su' }, { h: 'せ', k: 'セ', r: 'se' }, { h: 'そ', k: 'ソ', r: 'so' },
+            { h: 'た', k: 'タ', r: 'ta' }, { h: 'ち', k: 'チ', r: 'chi' }, { h: 'つ', k: 'ツ', r: 'tsu' }, { h: 'て', k: 'テ', r: 'te' }, { h: 'と', k: 'ト', r: 'to' },
+            { h: 'な', k: 'ナ', r: 'na' }, { h: 'に', k: 'ニ', r: 'ni' }, { h: 'ぬ', k: 'ヌ', r: 'nu' }, { h: 'ね', k: 'ネ', r: 'ne' }, { h: 'の', k: 'ノ', r: 'no' },
+            { h: 'は', k: 'ハ', r: 'ha' }, { h: 'ひ', k: 'ヒ', r: 'hi' }, { h: 'ふ', k: 'フ', r: 'fu' }, { h: 'へ', k: 'ヘ', r: 'he' }, { h: 'ほ', k: 'ホ', r: 'ho' },
+            { h: 'ま', k: 'マ', r: 'ma' }, { h: 'み', k: 'ミ', r: 'mi' }, { h: 'む', k: 'ム', r: 'mu' }, { h: 'め', k: 'メ', r: 'me' }, { h: 'も', k: 'モ', r: 'mo' },
+            { h: 'や', k: 'ヤ', r: 'ya' }, { h: 'ゆ', k: 'ユ', r: 'yu' }, { h: 'よ', k: 'ヨ', r: 'yo' },
+            { h: 'ら', k: 'ラ', r: 'ra' }, { h: 'り', k: 'リ', r: 'ri' }, { h: 'る', k: 'ル', r: 'ru' }, { h: 'れ', k: 'レ', r: 're' }, { h: 'ろ', k: 'ロ', r: 'ro' },
+            { h: 'わ', k: 'ワ', r: 'wa' }, { h: 'を', k: 'ヲ', r: 'wo' }, { h: 'ん', k: 'ン', r: 'n' }
         ];
 
+        let kanaData = [...fullData];
         let curIdx = 0, mode = 'practice';
         let strokesH = [], strokesK = [];
         let hiraDone = false, kataDone = false;
@@ -73,7 +98,7 @@
         const canK = document.getElementById('canK'), ctxK = canK.getContext('2d');
 
         function initCtx(ctx) {
-            ctx.lineWidth = 12; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 10; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#ffffff';
         }
         initCtx(ctxH); initCtx(ctxK);
 
@@ -90,47 +115,37 @@
                 return { x: cx - rect.left, y: cy - rect.top };
             };
 
-            can.addEventListener('touchstart', (e) => {
+            const start = (e) => {
+                if ((type==='H' && hiraDone) || (type==='K' && kataDone)) return;
                 e.preventDefault();
                 clearTimeout(timer);
                 drawing = true;
                 box.classList.remove('is-error');
                 const p = getXY(e);
                 ctx.beginPath(); ctx.moveTo(p.x, p.y);
-                strokes.push([[p.x], [p.y], []]);
-            }, { passive: false });
+                strokes.push([[Math.round(p.x)], [Math.round(p.y)], []]);
+            };
 
-            can.addEventListener('touchmove', (e) => {
+            const move = (e) => {
                 if (!drawing) return;
                 e.preventDefault();
                 const p = getXY(e);
                 ctx.lineTo(p.x, p.y); ctx.stroke();
                 const last = strokes[strokes.length - 1];
-                last[0].push(p.x); last[1].push(p.y);
-            }, { passive: false });
+                last[0].push(Math.round(p.x)); last[1].push(Math.round(p.y));
+            };
 
             const stop = () => { 
                 if (!drawing) return; 
                 drawing = false; 
-                // 調整：延遲縮短至 900ms (0.9秒)
-                timer = setTimeout(() => checkSingle(type), 900); 
+                timer = setTimeout(() => checkSingle(type), 800); 
             };
+
+            can.addEventListener('touchstart', start, { passive: false });
+            can.addEventListener('touchmove', move, { passive: false });
             can.addEventListener('touchend', stop);
-            can.addEventListener('mousedown', (e) => { 
-                clearTimeout(timer);
-                drawing = true; 
-                const p = getXY(e); 
-                ctx.beginPath(); ctx.moveTo(p.x, p.y); 
-                strokes.push([[p.x], [p.y], []]); 
-            });
-            can.addEventListener('mousemove', (e) => { 
-                if (drawing) { 
-                    const p = getXY(e); 
-                    ctx.lineTo(p.x, p.y); ctx.stroke(); 
-                    const last = strokes[strokes.length - 1]; 
-                    last[0].push(p.x); last[1].push(p.y); 
-                } 
-            });
+            can.addEventListener('mousedown', start);
+            can.addEventListener('mousemove', move);
             window.addEventListener('mouseup', stop);
         }
 
@@ -141,6 +156,7 @@
             const strokes = (type === 'H') ? strokesH : strokesK;
             const target = (type === 'H') ? kanaData[curIdx].h : kanaData[curIdx].k;
             const box = document.getElementById(type === 'H' ? 'boxH' : 'boxK');
+            
             if (strokes.length === 0 || (type === 'H' ? hiraDone : kataDone)) return;
 
             msg("辨識中...", "text-blue-400 loading-dot");
@@ -153,7 +169,7 @@
                     body: JSON.stringify({
                         options: "enable_pre_space",
                         requests: [{
-                            writing_guide: { writing_area_width: 320, writing_area_height: 210 },
+                            writing_guide: { writing_area_width: 320, writing_area_height: 200 },
                             ink: strokes,
                             language: "ja"
                         }]
@@ -163,29 +179,43 @@
                 const data = await res.json();
                 if (data[0] === "SUCCESS") {
                     const candidates = data[1][0][1];
-                    const isOk = candidates.slice(0, 20).some(c => c.includes(target) || target.includes(c));
+                    // 擴大判定範圍至前 15 個候選字
+                    const isOk = candidates.slice(0, 15).some(c => c === target);
 
                     if (isOk) {
                         box.classList.add('is-correct');
                         if (type === 'H') hiraDone = true; else kataDone = true;
+                        
                         if (hiraDone && kataDone) {
-                            msg("Perfect!", "text-green-400");
-                            setTimeout(nextQ, 800);
+                            msg("太棒了！", "text-green-400");
+                            setTimeout(nextQ, 1000);
                         } else {
-                            msg("OK!", "text-blue-400");
+                            msg("正確！繼續寫另一個", "text-blue-400");
                         }
                     } else {
                         box.classList.add('is-error');
-                        msg("再試一次", "text-red-400");
+                        msg("不對喔，再試試", "text-red-400");
                     }
                 }
             } catch (e) {
-                msg("連線不穩", "text-orange-400");
+                msg("網路連線異常", "text-orange-400");
             }
         }
 
+        function filterData() {
+            const val = document.getElementById('row-select').value;
+            if (val === 'all') {
+                kanaData = [...fullData];
+            } else {
+                const [start, end] = val.split(',').map(Number);
+                kanaData = fullData.slice(start, end);
+            }
+            curIdx = 0;
+            render();
+        }
+
         function resetAll() {
-            ctxH.clearRect(0,0,320,210); ctxK.clearRect(0,0,320,210);
+            ctxH.clearRect(0,0,320,200); ctxK.clearRect(0,0,320,200);
             strokesH.length = 0; strokesK.length = 0;
             hiraDone = false; kataDone = false;
             document.getElementById('boxH').className = 'canvas-box';
@@ -195,18 +225,42 @@
 
         function render() {
             const q = kanaData[curIdx];
+            if (!q) return;
             document.getElementById('target-romaji').innerText = q.r;
             document.getElementById('hint-hira').innerText = q.h;
             document.getElementById('hint-kata').innerText = q.k;
+            
             const isP = (mode === 'practice');
             document.getElementById('hint-hira').style.display = isP ? 'flex' : 'none';
             document.getElementById('hint-kata').style.display = isP ? 'flex' : 'none';
             resetAll();
         }
 
-        function nextQ() { curIdx = (curIdx + 1) % kanaData.length; render(); }
-        function setMode(m) { mode = m; document.getElementById('p-mode').className = `flex-1 py-1 rounded-lg font-bold text-xs ${m==='practice'?'active-mode':'text-slate-400'}`; document.getElementById('e-mode').className = `flex-1 py-1 rounded-lg font-bold text-xs ${m==='exam'?'active-mode':'text-slate-400'}`; render(); }
-        function msg(t, c) { const m = document.getElementById('status-msg'); m.innerText = t; m.className = `h-6 text-sm font-bold mb-4 ${c} tracking-widest uppercase`; }
+        function nextQ() { 
+            if (mode === 'exam') {
+                // 挑戰模式隨機出題
+                let newIdx;
+                do { newIdx = Math.floor(Math.random() * kanaData.length); } 
+                while (newIdx === curIdx && kanaData.length > 1);
+                curIdx = newIdx;
+            } else {
+                curIdx = (curIdx + 1) % kanaData.length; 
+            }
+            render(); 
+        }
+
+        function setMode(m) { 
+            mode = m; 
+            document.getElementById('p-mode').className = `flex-1 py-1 rounded-lg font-bold text-xs ${m==='practice'?'active-mode':'text-slate-400'}`; 
+            document.getElementById('e-mode').className = `flex-1 py-1 rounded-lg font-bold text-xs ${m==='exam'?'active-mode':'text-slate-400'}`; 
+            render(); 
+        }
+
+        function msg(t, c) { 
+            const m = document.getElementById('status-msg'); 
+            m.innerText = t; 
+            m.className = `h-6 text-sm font-bold mb-4 ${c} tracking-widest uppercase`; 
+        }
 
         render();
     </script>
