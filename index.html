@@ -2,290 +2,138 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>50音 AI 練字王 - 穩定修復版</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>九州 5 天 4 夜精華遊</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        html, body { 
-            position: fixed; overflow: hidden; width: 100%; height: 100%; 
-            touch-action: none; background-color: #020617; color: #f8fafc; font-family: sans-serif; 
+        :root {
+            --primary-color: #2D5A27; /* 森林綠 */
+            --accent-color: #E67E22;  /* 橘色提醒 */
+            --bg-color: #F8F9FA;
+            --text-dark: #333;
         }
-        .canvas-box { 
-            position: relative; width: 320px; height: 180px; 
-            background-color: #1e293b; border: 3px solid #334155; 
-            border-radius: 20px; overflow: hidden; margin-bottom: 8px;
-            transition: all 0.2s;
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
         }
-        .is-correct { border-color: #22c55e !important; background-color: #052e16 !important; }
-        .is-error { border-color: #ef4444 !important; }
-        
-        .hint-text {
-            position: absolute; inset: 0; display: flex; align-items: center; 
-            justify-content: center; font-size: 7rem; font-family: serif; 
-            font-weight: 900; z-index: 0; pointer-events: none; opacity: 0.12;
+
+        /* Header 樣式 */
+        header {
+            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), 
+                        url('https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=1000&q=80');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            padding: 60px 20px;
+            text-align: center;
         }
-        canvas { position: absolute; inset: 0; z-index: 10; touch-action: none; background: transparent; }
-        .active-mode { background-color: #3b82f6 !important; color: white !important; }
-        
-        .loading-dot { animation: blink 1s infinite; }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-        
-        .progress-bar { width: 100%; height: 4px; background: #334155; border-radius: 2px; margin-top: 8px; overflow: hidden; }
-        #progress-fill { width: 0%; height: 100%; background: #3b82f6; transition: width 0.3s; }
+
+        header h1 { margin: 0; font-size: 2rem; letter-spacing: 2px; }
+        header p { margin: 10px 0 0; opacity: 0.9; }
+
+        .container {
+            max-width: 600px;
+            margin: -30px auto 40px;
+            padding: 0 15px;
+        }
+
+        /* 時間軸樣式 */
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+        }
+
+        .day-section {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            position: relative;
+        }
+
+        .day-badge {
+            background: var(--primary-color);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+
+        .spot-card {
+            border-left: 3px solid #eee;
+            margin-left: 10px;
+            padding-left: 20px;
+            padding-bottom: 20px;
+            position: relative;
+        }
+
+        .spot-card::before {
+            content: '';
+            position: absolute;
+            left: -8px;
+            top: 0;
+            width: 13px;
+            height: 13px;
+            background: white;
+            border: 3px solid var(--primary-color);
+            border-radius: 50%;
+        }
+
+        .spot-card:last-child { border-left: none; padding-bottom: 0; }
+
+        .spot-time {
+            font-size: 0.85rem;
+            color: #888;
+            font-weight: bold;
+        }
+
+        .spot-name {
+            display: block;
+            font-size: 1.1rem;
+            color: #2980b9;
+            text-decoration: none;
+            font-weight: 700;
+            margin: 5px 0;
+        }
+
+        .spot-name i { font-size: 0.9rem; margin-left: 5px; }
+
+        .desc { font-size: 0.95rem; color: #666; margin: 0; }
+
+        /* 提醒區塊 */
+        .memo-box {
+            background: #FFF9E6;
+            border: 1px solid #FFE58F;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .memo-box h4 { margin: 0 0 5px; color: #856404; font-size: 0.9rem; }
+        .memo-box p { margin: 0; font-size: 0.85rem; color: #856404; }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: #aaa;
+            font-size: 0.8rem;
+        }
+
+        /* 動畫效果 */
+        .day-section { transition: transform 0.3s ease; }
+        .day-section:hover { transform: translateY(-5px); }
+
     </style>
 </head>
-<body class="flex flex-col items-center p-2">
+<body>
 
-    <div class="flex flex-col items-center space-y-2 mb-2 mt-1 w-full max-w-[320px]">
-        <div class="flex bg-slate-800 rounded-xl p-1 w-full">
-            <button id="p-mode" onclick="setMode('practice')" class="flex-1 py-2 rounded-lg font-bold text-xs">練習</button>
-            <button id="e-mode" onclick="setMode('exam')" class="flex-1 py-2 rounded-lg font-bold text-xs">隨機</button>
-            <button id="m-mode" onclick="setMode('marathon')" class="flex-1 py-2 rounded-lg font-bold text-xs">馬拉松</button>
-        </div>
-        
-        <div class="flex items-center space-x-2 w-full">
-            <select id="row-select" onchange="filterData()" class="flex-1 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white">
-                <option value="all">全部五十音</option>
-                <option value="0,5">あ行</option>
-                <option value="5,10">か行</option>
-                <option value="10,15">さ行</option>
-                <option value="15,20">た行</option>
-                <option value="20,25">な行</option>
-                <option value="25,30">は行</option>
-                <option value="30,35">ま行</option>
-                <option value="35,38">や行</option>
-                <option value="38,43">ら行</option>
-                <option value="43,46">わ/ん</option>
-            </select>
-            <div class="text-xs text-slate-500 font-mono" id="idx-counter">1/46</div>
-        </div>
-        <div class="progress-bar"><div id="progress-fill"></div></div>
-    </div>
-
-    <div id="target-romaji" class="text-6xl font-black text-blue-500 mb-1 uppercase italic tracking-tighter">A</div>
-
-    <div class="canvas-box" id="boxH">
-        <div class="hint-text text-slate-400" id="hint-hira">あ</div>
-        <canvas id="canH" width="320" height="180"></canvas>
-    </div>
-
-    <div class="canvas-box" id="boxK">
-        <div class="hint-text text-slate-500" id="hint-kata">ア</div>
-        <canvas id="canK" width="320" height="180"></canvas>
-    </div>
-
-    <div id="status-msg" class="h-6 text-xs font-bold mb-4 text-slate-500 tracking-widest text-center uppercase">READY</div>
-
-    <div class="flex space-x-3 w-full max-w-[320px]">
-        <button onclick="resetAll()" class="flex-1 bg-slate-800 py-4 rounded-2xl font-bold text-slate-300">清除</button>
-        <button onclick="nextQ()" class="flex-1 bg-blue-900/30 text-blue-400 py-4 rounded-2xl font-bold">跳過</button>
-    </div>
-
-    <script>
-        const fullData = [
-            { h: 'あ', k: 'ア', r: 'a' }, { h: 'い', k: 'イ', r: 'i' }, { h: 'う', k: 'ウ', r: 'u' }, { h: 'え', k: 'エ', r: 'e' }, { h: 'お', k: 'オ', r: 'o' },
-            { h: 'か', k: 'カ', r: 'ka' }, { h: 'き', k: 'キ', r: 'ki' }, { h: 'く', k: 'ク', r: 'ku' }, { h: 'け', k: 'ケ', r: 'ke' }, { h: 'こ', k: 'コ', r: 'ko' },
-            { h: 'さ', k: 'サ', r: 'sa' }, { h: 'し', k: 'シ', r: 'shi' }, { h: 'す', k: 'ス', r: 'su' }, { h: 'せ', k: 'セ', r: 'se' }, { h: 'そ', k: 'ソ', r: 'so' },
-            { h: 'た', k: 'タ', r: 'ta' }, { h: 'ち', k: 'チ', r: 'chi' }, { h: 'つ', k: 'ツ', r: 'tsu' }, { h: 'て', k: 'テ', r: 'te' }, { h: 'と', k: 'ト', r: 'to' },
-            { h: 'な', k: 'ナ', r: 'na' }, { h: 'に', k: 'ニ', r: 'ni' }, { h: 'ぬ', k: 'ヌ', r: 'nu' }, { h: 'ね', k: 'ネ', r: 'ne' }, { h: 'の', k: 'ノ', r: 'no' },
-            { h: 'は', k: 'ハ', r: 'ha' }, { h: 'ひ', k: 'ヒ', r: 'hi' }, { h: 'ふ', k: 'フ', r: 'fu' }, { h: 'へ', k: 'ヘ', r: 'he' }, { h: 'ほ', k: 'ホ', r: 'ho' },
-            { h: 'ま', k: 'マ', r: 'ma' }, { h: 'み', k: 'ミ', r: 'mi' }, { h: 'む', k: 'ム', r: 'mu' }, { h: 'め', k: 'メ', r: 'me' }, { h: 'も', k: 'モ', r: 'mo' },
-            { h: 'や', k: 'ヤ', r: 'ya' }, { h: 'ゆ', k: 'ユ', r: 'yu' }, { h: 'よ', k: 'ヨ', r: 'yo' },
-            { h: 'ら', k: 'ラ', r: 'ra' }, { h: 'り', k: 'リ', r: 'ri' }, { h: 'る', k: 'ル', r: 'ru' }, { h: 'れ', k: 'レ', r: 're' }, { h: 'ろ', k: 'ロ', r: 'ro' },
-            { h: 'わ', k: 'ワ', r: 'wa' }, { h: 'を', k: 'ヲ', r: 'wo' }, { h: 'ん', k: 'ン', r: 'n' }
-        ];
-
-        let kanaData = [...fullData];
-        let curIdx = 0, mode = 'practice';
-        let strokesH = [], strokesK = [];
-        let hiraDone = false, kataDone = false;
-        
-        const canH = document.getElementById('canH'), ctxH = canH.getContext('2d');
-        const canK = document.getElementById('canK'), ctxK = canK.getContext('2d');
-
-        function initCtx(ctx) {
-            ctx.lineWidth = 8; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#ffffff';
-        }
-        initCtx(ctxH); initCtx(ctxK);
-
-        function msg(t, c) {
-            const s = document.getElementById('status-msg');
-            s.innerText = t; s.className = `h-6 text-xs font-bold mb-4 tracking-widest text-center uppercase ${c}`;
-        }
-
-        function setupCanvas(can, strokesArr, type) {
-            let drawing = false;
-            let timer = null;
-            const ctx = can.getContext('2d');
-            
-            const getXY = (e) => {
-                const rect = can.getBoundingClientRect();
-                const cx = e.touches ? e.touches[0].clientX : e.clientX;
-                const cy = e.touches ? e.touches[0].clientY : e.clientY;
-                // 考量到 CSS 縮放，使用比例計算正確座標
-                return { 
-                    x: (cx - rect.left) * (can.width / rect.width), 
-                    y: (cy - rect.top) * (can.height / rect.height) 
-                };
-            };
-
-            const start = (e) => {
-                if ((type === 'H' && hiraDone) || (type === 'K' && kataDone)) return;
-                // 防止捲動
-                if(e.cancelable) e.preventDefault();
-                
-                clearTimeout(timer); // 只要一落筆，停止辨識倒數
-                drawing = true;
-                
-                const p = getXY(e);
-                ctx.beginPath();
-                ctx.moveTo(p.x, p.y);
-                strokesArr.push([[Math.round(p.x)], [Math.round(p.y)], []]);
-                
-                document.getElementById(type === 'H' ? 'boxH' : 'boxK').classList.remove('is-error');
-            };
-
-            const move = (e) => {
-                if (!drawing) return;
-                if(e.cancelable) e.preventDefault();
-                
-                const p = getXY(e);
-                ctx.lineTo(p.x, p.y);
-                ctx.stroke();
-                
-                const last = strokesArr[strokesArr.length - 1];
-                last[0].push(Math.round(p.x));
-                last[1].push(Math.round(p.y));
-            };
-
-            const stop = () => {
-                if (drawing) {
-                    drawing = false;
-                    // 停止書寫 800 毫秒後觸發辨識
-                    timer = setTimeout(() => checkSingle(type), 800);
-                }
-            };
-
-            can.addEventListener('touchstart', start, { passive: false });
-            can.addEventListener('touchmove', move, { passive: false });
-            can.addEventListener('touchend', stop);
-            can.addEventListener('mousedown', start);
-            can.addEventListener('mousemove', move);
-            window.addEventListener('mouseup', stop);
-        }
-
-        setupCanvas(canH, strokesH, 'H');
-        setupCanvas(canK, strokesK, 'K');
-
-        async function checkSingle(type) {
-            const strokes = (type === 'H') ? strokesH : strokesK;
-            const target = (type === 'H') ? kanaData[curIdx].h : kanaData[curIdx].k;
-            const box = document.getElementById(type === 'H' ? 'boxH' : 'boxK');
-            
-            if (strokes.length === 0 || (type === 'H' ? hiraDone : kataDone)) return;
-
-            msg("辨識中...", "text-blue-400 loading-dot");
-
-            try {
-                const res = await fetch('https://inputtools.google.com/request?ime=handwriting&app=mobilesearch&cs=1&oe=UTF-8', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        options: "enable_pre_space",
-                        requests: [{
-                            writing_guide: { writing_area_width: 320, writing_area_height: 180 },
-                            ink: strokes,
-                            language: "ja"
-                        }]
-                    })
-                });
-                const data = await res.json();
-                if (data && data[0] === "SUCCESS") {
-                    const candidates = data[1][0][1];
-                    // 檢查前 10 個候選字是否包含目標
-                    const isOk = candidates.slice(0, 10).includes(target);
-
-                    if (isOk) {
-                        box.classList.add('is-correct');
-                        if (type === 'H') hiraDone = true; else kataDone = true;
-                        
-                        if (hiraDone && kataDone) {
-                            msg("Perfect!", "text-green-400");
-                            setTimeout(nextQ, 800);
-                        } else {
-                            msg("正確！繼續寫下一個", "text-blue-400");
-                        }
-                    } else {
-                        box.classList.add('is-error');
-                        msg("不對喔，再試試", "text-red-400");
-                    }
-                }
-            } catch (e) { 
-                msg("網路不穩", "text-orange-400"); 
-            }
-        }
-
-        function filterData() {
-            const val = document.getElementById('row-select').value;
-            kanaData = (val === 'all') ? [...fullData] : fullData.slice(...val.split(',').map(Number));
-            curIdx = 0;
-            render();
-        }
-
-        function resetAll() {
-            ctxH.clearRect(0,0,canH.width,canH.height); 
-            ctxK.clearRect(0,0,canK.width,canK.height);
-            initCtx(ctxH); initCtx(ctxK); // 重新初始化 Context 狀態
-            strokesH.length = 0; strokesK.length = 0;
-            hiraDone = false; kataDone = false;
-            document.getElementById('boxH').classList.remove('is-correct', 'is-error');
-            document.getElementById('boxK').classList.remove('is-correct', 'is-error');
-            msg("READY", "text-slate-500");
-        }
-
-        function render() {
-            const q = kanaData[curIdx];
-            if (!q) return;
-            document.getElementById('target-romaji').innerText = q.r;
-            document.getElementById('hint-hira').innerText = q.h;
-            document.getElementById('hint-kata').innerText = q.k;
-            
-            const isP = (mode === 'practice');
-            document.getElementById('hint-hira').style.display = isP ? 'flex' : 'none';
-            document.getElementById('hint-kata').style.display = isP ? 'flex' : 'none';
-            
-            document.getElementById('progress-fill').style.width = `${((curIdx) / kanaData.length) * 100}%`;
-            document.getElementById('idx-counter').innerText = `${curIdx + 1}/${kanaData.length}`;
-            
-            resetAll();
-        }
-
-        function nextQ() { 
-            if (mode === 'exam') {
-                curIdx = Math.floor(Math.random() * kanaData.length);
-            } else {
-                curIdx = (curIdx + 1) % kanaData.length;
-                if (curIdx === 0 && mode === 'marathon') alert("馬拉松練習完成！");
-            }
-            render(); 
-        }
-
-        function setMode(m) { 
-            mode = m; 
-            document.getElementById('p-mode').className = `flex-1 py-2 rounded-lg font-bold text-xs ${m==='practice'?'active-mode':'text-slate-400'}`; 
-            document.getElementById('e-mode').className = `flex-1 py-2 rounded-lg font-bold text-xs ${m==='exam'?'active-mode':'text-slate-400'}`; 
-            document.getElementById('m-mode').className = `flex-1 py-2 rounded-lg font-bold text-xs ${m==='marathon'?'active-mode':'text-slate-400'}`; 
-            
-            if (m === 'marathon') {
-                document.getElementById('row-select').value = 'all';
-                filterData();
-            } else {
-                render();
-            }
-        }
-
-        // 初始化
-        setMode('practice');
-    </script>
-</body>
-</html>
+<header
